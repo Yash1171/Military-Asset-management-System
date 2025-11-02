@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Calendar, ChevronDown, Filter, Plus } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,6 +31,8 @@ import { DataTable } from "@/components/data-table"
 
 export default function PurchasesPage() {
   const [open, setOpen] = useState(false)
+  const { user, canEdit, getVisibleBases } = useAuth()
+  const visibleBases = getVisibleBases()
 
   return (
     <div className="flex flex-col">
@@ -39,7 +42,7 @@ export default function PurchasesPage() {
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1">
+                <Button variant="outline" size="sm" className="h-8 gap-1 bg-transparent">
                   <Filter className="h-3.5 w-3.5" />
                   <span>Filter</span>
                   <ChevronDown className="h-3.5 w-3.5" />
@@ -48,10 +51,18 @@ export default function PurchasesPage() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Filter By</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem checked>All Bases</DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>Base Alpha</DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>Base Bravo</DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>Base Charlie</DropdownMenuCheckboxItem>
+                {user?.role === "Admin" ? (
+                  <>
+                    <DropdownMenuCheckboxItem checked>All Bases</DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem>Base Alpha</DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem>Base Bravo</DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem>Base Charlie</DropdownMenuCheckboxItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuCheckboxItem checked>{user?.base}</DropdownMenuCheckboxItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuCheckboxItem checked>All Equipment</DropdownMenuCheckboxItem>
                 <DropdownMenuCheckboxItem>Vehicles</DropdownMenuCheckboxItem>
@@ -59,90 +70,100 @@ export default function PurchasesPage() {
                 <DropdownMenuCheckboxItem>Ammunition</DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="sm" className="h-8 gap-1">
+            <Button variant="outline" size="sm" className="h-8 gap-1 bg-transparent">
               <Calendar className="h-3.5 w-3.5" />
               <span>May 2025</span>
               <ChevronDown className="h-3.5 w-3.5" />
             </Button>
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="h-8 gap-1">
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>New Purchase</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Record New Purchase</DialogTitle>
-                  <DialogDescription>Enter the details of the new asset purchase</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="date" className="text-right">
-                      Date
-                    </Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      className="col-span-3"
-                      defaultValue={new Date().toISOString().split("T")[0]}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="base" className="text-right">
-                      Base
-                    </Label>
-                    <Select defaultValue="base-alpha">
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select base" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="base-alpha">Base Alpha</SelectItem>
-                        <SelectItem value="base-bravo">Base Bravo</SelectItem>
-                        <SelectItem value="base-charlie">Base Charlie</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="type" className="text-right">
-                      Asset Type
-                    </Label>
-                    <Select defaultValue="vehicles">
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select asset type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="vehicles">Vehicles</SelectItem>
-                        <SelectItem value="weapons">Weapons</SelectItem>
-                        <SelectItem value="ammunition">Ammunition</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="quantity" className="text-right">
-                      Quantity
-                    </Label>
-                    <Input id="quantity" type="number" className="col-span-3" defaultValue="1" min="1" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="notes" className="text-right">
-                      Notes
-                    </Label>
-                    <Input id="notes" className="col-span-3" placeholder="Additional information" />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="submit"
-                    onClick={() => {
-                      setOpen(false)
-                    }}
-                  >
-                    Record Purchase
+            {canEdit("purchases") && (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="h-8 gap-1">
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>New Purchase</span>
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Record New Purchase</DialogTitle>
+                    <DialogDescription>Enter the details of the new asset purchase</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="date" className="text-right">
+                        Date
+                      </Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        className="col-span-3"
+                        defaultValue={new Date().toISOString().split("T")[0]}
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="base" className="text-right">
+                        Base
+                      </Label>
+                      <Select
+                        defaultValue={user?.role === "Admin" ? "base-alpha" : user?.base?.toLowerCase() || "base-alpha"}
+                      >
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="Select base" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {user?.role === "Admin" ? (
+                            <>
+                              <SelectItem value="base-alpha">Base Alpha</SelectItem>
+                              <SelectItem value="base-bravo">Base Bravo</SelectItem>
+                              <SelectItem value="base-charlie">Base Charlie</SelectItem>
+                            </>
+                          ) : (
+                            <SelectItem value={user?.base?.toLowerCase() || "base-alpha"}>{user?.base}</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="type" className="text-right">
+                        Asset Type
+                      </Label>
+                      <Select defaultValue="vehicles">
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="Select asset type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="vehicles">Vehicles</SelectItem>
+                          <SelectItem value="weapons">Weapons</SelectItem>
+                          <SelectItem value="ammunition">Ammunition</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="quantity" className="text-right">
+                        Quantity
+                      </Label>
+                      <Input id="quantity" type="number" className="col-span-3" defaultValue="1" min="1" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="notes" className="text-right">
+                        Notes
+                      </Label>
+                      <Input id="notes" className="col-span-3" placeholder="Additional information" />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="submit"
+                      onClick={() => {
+                        setOpen(false)
+                      }}
+                    >
+                      Record Purchase
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
         <div className="grid gap-4">

@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, Filter, Plus, Edit, Trash2, Shield, User } from "lucide-react"
+import { ChevronDown, Filter, Plus, Edit, Trash2, Shield, User, AlertCircle } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,6 +28,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,69 +58,51 @@ export default function UsersPage() {
   const [open, setOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserInterface | null>(null)
+  const { user, canDeleteUsers, allUsers } = useAuth()
 
-  const users: UserInterface[] = [
-    {
-      id: "1",
-      name: "Col. Richards",
-      email: "richards@military.gov",
-      role: "Admin",
-      base: "Base Alpha",
-      status: "Active",
-      lastLogin: "2025-05-24 09:30",
-      createdAt: "2024-01-15",
-    },
-    {
-      id: "2",
-      name: "Maj. Thompson",
-      email: "thompson@military.gov",
-      role: "Base Commander",
-      base: "Base Bravo",
-      status: "Active",
-      lastLogin: "2025-05-24 08:45",
-      createdAt: "2024-02-20",
-    },
-    {
-      id: "3",
-      name: "Lt. Col. Davis",
-      email: "davis@military.gov",
-      role: "Base Commander",
-      base: "Base Charlie",
-      status: "Active",
-      lastLogin: "2025-05-23 16:20",
-      createdAt: "2024-03-10",
-    },
-    {
-      id: "4",
-      name: "Capt. Johnson",
-      email: "johnson@military.gov",
-      role: "Logistics Officer",
-      base: "Base Alpha",
-      status: "Active",
-      lastLogin: "2025-05-24 07:15",
-      createdAt: "2024-04-05",
-    },
-    {
-      id: "5",
-      name: "Lt. Smith",
-      email: "smith@military.gov",
-      role: "Logistics Officer",
-      base: "Base Bravo",
-      status: "Active",
-      lastLogin: "2025-05-23 14:30",
-      createdAt: "2024-05-12",
-    },
-    {
-      id: "6",
-      name: "Maj. Williams",
-      email: "williams@military.gov",
-      role: "Logistics Officer",
-      base: "Base Charlie",
-      status: "Inactive",
-      lastLogin: "2025-05-20 11:45",
-      createdAt: "2024-06-18",
-    },
-  ]
+  if (!user || user.role !== "Admin") {
+    return (
+      <div className="flex flex-col">
+        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+          <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
+          <Alert className="border-red-300 bg-red-50">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              Access Denied: Only Admin role can access user management. Your current role ({user?.role}) does not have
+              permission to manage system users. Contact your administrator for access.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    )
+  }
+
+  const defaultUsers: UserInterface[] = allUsers.map((u) => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    base: u.base || "Central Command",
+    status: "Active" as const,
+    lastLogin: "2025-05-24 09:30",
+    createdAt: "2024-01-15",
+  }))
+
+  const users =
+    defaultUsers.length > 0
+      ? defaultUsers
+      : [
+          {
+            id: "1",
+            name: "Col. Richards",
+            email: "richards@military.gov",
+            role: "Admin" as const,
+            base: "Base Alpha",
+            status: "Active" as const,
+            lastLogin: "2025-05-24 09:30",
+            createdAt: "2024-01-15",
+          },
+        ]
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -167,7 +151,7 @@ export default function UsersPage() {
       cell: (row: UserInterface) => (
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={`/placeholder.svg?height=32&width=32`} />
+            <AvatarImage src={`/placeholder-32px.png?height=32&width=32`} />
             <AvatarFallback>
               {row.name
                 .split(" ")
@@ -245,7 +229,7 @@ export default function UsersPage() {
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1">
+                <Button variant="outline" size="sm" className="h-8 gap-1 bg-transparent">
                   <Filter className="h-3.5 w-3.5" />
                   <span>Filter</span>
                   <ChevronDown className="h-3.5 w-3.5" />

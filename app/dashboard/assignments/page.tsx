@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Calendar, ChevronDown, Filter, Plus } from "lucide-react"
+import { Calendar, ChevronDown, Filter, Plus, AlertCircle } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,12 +28,31 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 import { DataTable } from "@/components/data-table"
 
 export default function AssignmentsPage() {
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("assigned")
+  const { user, canEdit } = useAuth()
+
+  if (!user || user.role === "Logistics Officer") {
+    return (
+      <div className="flex flex-col">
+        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+          <h2 className="text-3xl font-bold tracking-tight">Assignments & Expenditures</h2>
+          <Alert className="border-amber-300 bg-amber-50">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              Access Denied: Only Admin and Base Commander roles can access this page. Your current role ({user?.role})
+              does not have permission to view assignments and expenditures.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col">
@@ -42,7 +62,7 @@ export default function AssignmentsPage() {
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1">
+                <Button variant="outline" size="sm" className="h-8 gap-1 bg-transparent">
                   <Filter className="h-3.5 w-3.5" />
                   <span>Filter</span>
                   <ChevronDown className="h-3.5 w-3.5" />
@@ -62,7 +82,7 @@ export default function AssignmentsPage() {
                 <DropdownMenuCheckboxItem>Ammunition</DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="sm" className="h-8 gap-1">
+            <Button variant="outline" size="sm" className="h-8 gap-1 bg-transparent">
               <Calendar className="h-3.5 w-3.5" />
               <span>May 2025</span>
               <ChevronDown className="h-3.5 w-3.5" />
